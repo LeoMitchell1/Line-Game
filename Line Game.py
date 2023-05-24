@@ -16,7 +16,7 @@ dot_spacing = 100
 line_thickness = 12
 
 player_first = True
-win_condition = 6
+win_condition = 20
 
 
 def player_wins():
@@ -33,36 +33,55 @@ def player_turn(event):
     
     if color == 'white':
         c.itemconfig(line_id, fill='crimson')
-        longest_line_length = count_longest_line(line_id)
-        print("Longest line length:", longest_line_length)
         computer_turn()
     
-    if get_touching_red_lines(line_id):
-        return
+    longest_line_length = count_longest_line()
+    print("Longest line length:", longest_line_length)
     
     if all_colored():
         print('There are no more moves.')
+
+    if not check_win_condition(longest_line_length):
         return
-
-
-def count_longest_line(line_id):
-    visited = set()
-    lengths = {}
-    dfs(line_id, visited, 1, lengths)
     
-    longest_line_length = max(lengths.values())
+
+def count_longest_line():
+    lengths = {}
+    for line_id in lines:
+        if c.itemcget(line_id, 'fill') == 'crimson':
+            visited = set()
+            length = counting_function(line_id, visited, 1, lengths)
+            lengths[line_id] = length
+
+    longest_line_length = max(lengths.values(), default=0)
     return longest_line_length
 
-def dfs(line_id, visited, current_length, lengths):
+
+def counting_function(line_id, visited, current_length, lengths, prev_line_id=None):
     visited.add(line_id)
-    
+
     if line_id not in lengths or current_length > lengths[line_id]:
         lengths[line_id] = current_length
-    
+
     touching_lines = get_touching_red_lines(line_id)
+    valid_touching_lines = []
+
     for neighbor_id in touching_lines:
-        if neighbor_id not in visited:
-            dfs(neighbor_id, visited, current_length + 1, lengths)
+        if neighbor_id not in visited and neighbor_id != prev_line_id:
+            valid_touching_lines.append(neighbor_id)
+
+    if not valid_touching_lines:
+        return current_length
+
+    max_length = current_length
+
+    for neighbor_id in valid_touching_lines:
+        new_visited = visited.copy()
+        new_length = counting_function(neighbor_id, new_visited, current_length + 1, lengths, line_id)
+        if new_length > max_length:
+            max_length = new_length
+
+    return max_length
 
 
 def computer_turn():
@@ -70,6 +89,8 @@ def computer_turn():
     if white_lines:
         line_id = random.choice(white_lines)
         c.itemconfig(line_id, fill='lightseagreen')  
+    else:
+        return
 
 
 def get_touching_red_lines(line_id):
@@ -85,8 +106,12 @@ def get_touching_red_lines(line_id):
 
 
 def all_colored():
-    return all(c.itemcget(line, 'fill') == 'crimson' for line in lines)
-
+    for line in lines:
+        color = c.itemcget(line, 'fill')
+        if color == 'white':
+            return False
+    return True
+    
 
 def check_win_condition(player_count):
     if player_count >= win_condition:
