@@ -3,10 +3,10 @@ import random
 
 window = tk.Tk()
 window.title("Line Game")
-window.geometry('500x500')
+window.geometry('600x600')
 
-canvas_width = 500
-canvas_height = 500
+canvas_width = 600
+canvas_height = 600
 
 c = tk.Canvas(window, width=canvas_width, height=canvas_height, bg='white')
 c.pack()
@@ -16,27 +16,50 @@ dot_spacing = 100
 line_thickness = 12
 
 player_first = True
-win_condition = 20
+win_condition = 8
+game_over = False
+
+result_label = tk.Label(window, text='', font=('Arial', 20, 'bold'), bg='white')
+result_label.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
+
+player_count_label = tk.Label(window, text="Player's count: 0", font=('Arial', 16), bg='white')
+player_count_label.place(relx=0.1, rely=0.95, anchor=tk.SW)
+
 
 
 def player_wins():
+    global game_over
     print('Player wins!')
-
+    game_over = True
+    result_label.config(text='Game Over! Player Wins.')
 
 def computer_wins():
+    global game_over
     print('Game Over. You lose.')
+    game_over = True
 
 
 def player_turn(event):
+    global game_over
+    if game_over:
+        return
     line_id = event.widget.find_closest(event.x, event.y)[0]
     color = c.itemcget(line_id, 'fill')
     
+    if color == 'crimson':
+        return
+    
+    if color == 'lightseagreen':
+        return
+
     if color == 'white':
         c.itemconfig(line_id, fill='crimson')
+        update_player_count()
         computer_turn()
     
     longest_line_length = count_longest_line()
     print("Longest line length:", longest_line_length)
+
     
     if all_colored():
         print('There are no more moves.')
@@ -44,6 +67,19 @@ def player_turn(event):
     if not check_win_condition(longest_line_length):
         return
     
+
+def computer_turn():
+    global game_over
+    if game_over:
+        return
+    
+    white_lines = [line for line in lines if c.itemcget(line, 'fill') == 'white']
+    if white_lines:
+        line_id = random.choice(white_lines)
+        c.itemconfig(line_id, fill='lightseagreen')  
+    else:
+        return
+
 
 def count_longest_line():
     lengths = {}
@@ -84,15 +120,6 @@ def counting_function(line_id, visited, current_length, lengths, prev_line_id=No
     return max_length
 
 
-def computer_turn():
-    white_lines = [line for line in lines if c.itemcget(line, 'fill') == 'white']
-    if white_lines:
-        line_id = random.choice(white_lines)
-        c.itemconfig(line_id, fill='lightseagreen')  
-    else:
-        return
-
-
 def get_touching_red_lines(line_id):
     touching_lines = []
     x1, y1, x2, y2 = c.coords(line_id)
@@ -117,7 +144,22 @@ def check_win_condition(player_count):
     if player_count >= win_condition:
         player_wins()
         return True
+
+    computer_count = count_longest_line()
+    if computer_count >= win_condition:
+        computer_wins()
+        return True
+
+    if all_colored():
+        print("There are no more moves.")
+        game_over = True
+
     return False
+
+
+def update_player_count():
+    player_count = count_longest_line()
+    player_count_label.config(text="Player's count: " + str(player_count))
 
 
 start_x = (canvas_width - (3 * dot_spacing + 4 * dot_size)) // 2
