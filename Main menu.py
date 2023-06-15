@@ -24,7 +24,7 @@ def start_game():
     canvas_width = 700
     canvas_height = 800
 
-    c = tk.Canvas(game_window, width=canvas_width, height=canvas_height, bg='white')
+    c = tk.Canvas(game_window, width=canvas_width, height=canvas_height, bg='#18191A')
     c.pack()
 
     dot_size = 16
@@ -32,15 +32,15 @@ def start_game():
     line_thickness = 12
 
     player_first = True
-    win_condition = 20
+    win_condition = 10
 
-    result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='white')
+    result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='#18191A')
     result_label.place(relx=0.5, rely=0.08, anchor=tk.CENTER)
 
-    player_count_label = tk.Label(game_window, text="Player's count: 0", font=('Arial', 16, 'bold'), bg='white', fg='crimson')
+    player_count_label = tk.Label(game_window, text="Player's count: 0", font=('Arial', 16, 'bold'), bg='#18191A', fg='#FF1199')
     player_count_label.place(relx=0.1, rely=0.18, anchor=tk.SW)
 
-    computer_count_label = tk.Label(game_window, text="Computer's count: 0", font=('Arial', 16, 'bold'), bg='white', fg='lightseagreen')
+    computer_count_label = tk.Label(game_window, text="Computer's count: 0", font=('Arial', 16, 'bold'), bg='#18191A', fg='#11FFEE')
     computer_count_label.place(relx=0.61, rely=0.18, anchor=tk.SW)
 
     start_x = (canvas_width - (4 * dot_spacing + 4 * dot_size)) // 2
@@ -64,11 +64,11 @@ def start_game():
         line_id = event.widget.find_closest(event.x, event.y)[0]
         color = c.itemcget(line_id, 'fill')
 
-        if color == 'crimson' or color == 'lightseagreen':
+        if color == '#FF1199' or color == '#11FFEE':
             return
 
-        if color == 'white':
-            c.itemconfig(line_id, fill='crimson')
+        if color == '#18191A':
+            c.itemconfig(line_id, fill='#FF1199')
             click_sound()
             update_player_count()
             computer_turn()
@@ -90,10 +90,10 @@ def start_game():
         if game_over:
             return
 
-        white_lines = [line for line in lines if c.itemcget(line, 'fill') == 'white']
+        white_lines = [line for line in lines if c.itemcget(line, 'fill') == '#18191A']
         if white_lines:
             line_id = random.choice(white_lines)
-            c.itemconfig(line_id, fill='lightseagreen')
+            c.itemconfig(line_id, fill='#11FFEE')
         else:
             return
 
@@ -102,7 +102,7 @@ def start_game():
         visited = set()
 
         for line_id in lines:
-            if c.itemcget(line_id, 'fill') == 'crimson' and line_id not in visited:
+            if c.itemcget(line_id, 'fill') == '#FF1199' and line_id not in visited:
                 if start_line and line_id != start_line:
                     continue
 
@@ -145,14 +145,14 @@ def start_game():
         for nearby_line in nearby_lines:
             if nearby_line != line_id:
                 color = c.itemcget(nearby_line, 'fill')
-                if color == 'crimson':
+                if color == '#FF1199':
                     touching_lines.append(nearby_line)
         return touching_lines
 
     def all_colored():
         for line in lines:
             color = c.itemcget(line, 'fill')
-            if color == 'white':
+            if color == '#18191A':
                 return False
         return True
 
@@ -192,7 +192,7 @@ def start_game():
             for col in range(4):
                 x = start_x + col * (dot_size + dot_spacing) + dot_size // 2
                 y = start_y + row * (dot_size + dot_spacing) + dot_size // 2
-                line = c.create_line(x, y, x + dot_spacing + dot_size, y, fill="white", width=line_thickness)
+                line = c.create_line(x, y, x + dot_spacing + dot_size, y, fill="#18191A", width=line_thickness)
                 lines.append(line)
                 c.tag_bind(line, '<Button-1>', player_turn)
 
@@ -200,7 +200,7 @@ def start_game():
             for col in range(5):
                 x = start_x + col * (dot_size + dot_spacing) + dot_size // 2
                 y = start_y + row * (dot_size + dot_spacing) + dot_size // 2
-                line = c.create_line(x, y, x, y + dot_spacing + dot_size, fill="white", width=line_thickness)
+                line = c.create_line(x, y, x, y + dot_spacing + dot_size, fill="#18191A", width=line_thickness)
                 lines.append(line)
                 c.tag_bind(line, '<Button-1>', player_turn)
 
@@ -233,11 +233,6 @@ main_window.resizable(False, False)
 canvas_width = 600
 canvas_height = 600
 
-bg_color = "#f0f0f0"
-line_color = "#777777"
-dot_color = "black"
-player_color = "#ff3300"
-computer_color = "#00cccc"
 
 videoplayer = TkinterVideo(master=main_window, scaled=True)
 videoplayer.load(r"Background Video.mp4")
@@ -253,10 +248,8 @@ def menu_quit():
     main_window.destroy()
     quit()
 
-canvas = tk.Canvas(main_window, width=canvas_width, height=canvas_height, bg=bg_color)
-canvas.pack()
 
-title_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 20, 'bold'), fg='black', bg='black')
+title_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 20, 'bold'), fg='purple', bg='black')
 title_label.place(relx=0.5, rely=0.2, anchor=tk.CENTER)
 
 play_button = tk.Button(main_window, text="Play", font=('Arial', 16, 'bold'), bg='goldenrod', command=start_game)
