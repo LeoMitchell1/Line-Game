@@ -1,5 +1,14 @@
 import tkinter as tk
 import random
+from pygame import mixer
+from tkVideoPlayer import TkinterVideo
+
+
+
+def click_sound():
+    mixer.init()
+    sound = mixer.Sound("Click sound.mp3")
+    sound.play()
 
 def menu_close():
     main_window.withdraw()
@@ -34,11 +43,8 @@ def start_game():
     computer_count_label = tk.Label(game_window, text="Computer's count: 0", font=('Arial', 16, 'bold'), bg='white', fg='lightseagreen')
     computer_count_label.place(relx=0.61, rely=0.18, anchor=tk.SW)
 
-    branch_counts = []  # Store branch counts
-
     start_x = (canvas_width - (4 * dot_spacing + 4 * dot_size)) // 2
     start_y = (canvas_height - (4 * dot_spacing + 4 * dot_size)) // 2
-
 
     def player_wins():
         global game_over
@@ -46,12 +52,10 @@ def start_game():
         game_over = True
         result_label.config(text='Game Over! Player Wins.')
 
-
     def computer_wins():
         global game_over
         print('Game Over. You lose.')
         game_over = True
-
 
     def player_turn(event):
         global game_over
@@ -65,6 +69,7 @@ def start_game():
 
         if color == 'white':
             c.itemconfig(line_id, fill='crimson')
+            click_sound()
             update_player_count()
             computer_turn()
 
@@ -80,8 +85,6 @@ def start_game():
         player_count = count_longest_line(start_line=line_id)
         player_count_label.config(text="Player's count: " + str(player_count))
 
-
-
     def computer_turn():
         global game_over
         if game_over:
@@ -93,7 +96,6 @@ def start_game():
             c.itemconfig(line_id, fill='lightseagreen')
         else:
             return
-
 
     def count_longest_line(start_line=None):
         longest_line_length = 0
@@ -119,8 +121,6 @@ def start_game():
 
         return longest_line_length
 
-
-
     def is_only_touching_one_side(line1, line2):
         x1, y1, x2, y2 = c.coords(line1)
         x3, y3, x4, y4 = c.coords(line2)
@@ -138,7 +138,6 @@ def start_game():
 
         return False
 
-
     def get_touching_red_lines(line_id):
         touching_lines = []
         x1, y1, x2, y2 = c.coords(line_id)
@@ -150,15 +149,12 @@ def start_game():
                     touching_lines.append(nearby_line)
         return touching_lines
 
-
     def all_colored():
         for line in lines:
             color = c.itemcget(line, 'fill')
             if color == 'white':
                 return False
         return True
-    
-
 
     def check_win_condition(player_count):
         if player_count >= win_condition:
@@ -172,26 +168,20 @@ def start_game():
 
         return False
 
-
     def update_player_count():
         player_count = count_longest_line()
         player_count_label.config(text="Player's count: " + str(player_count))
-
 
     def main_menu():
         game_window.destroy()
         main_window.deiconify()
 
-
-
     lines = []
     dots = []
 
     def start_new_game():
-
         global game_over
         game_over = False
-        branch_counts.clear()  # Clear branch_counts list
         result_label.config(text='')
         player_count_label.config(text="Player's count: 0")
         c.delete('all')
@@ -223,7 +213,6 @@ def start_game():
         if not player_first:
             computer_turn()
 
-
     start_new_game()
 
     restart_button = tk.Button(game_window, text="Restart", font=('Arial', 16, 'bold'), bg='goldenrod', command=start_new_game)
@@ -241,21 +230,39 @@ main_window.title("Main Menu")
 main_window.geometry("600x600")
 main_window.resizable(False, False)
 
+canvas_width = 600
+canvas_height = 600
+
+bg_color = "#f0f0f0"
+line_color = "#777777"
+dot_color = "black"
+player_color = "#ff3300"
+computer_color = "#00cccc"
+
+videoplayer = TkinterVideo(master=main_window, scaled=True)
+videoplayer.load(r"Background Video.mp4")
+videoplayer.pack(expand=True, fill='both')
+videoplayer.play()
+
+def video_loop():
+    videoplayer.play()
+    main_window.after(1, video_loop)
+main_window.after(1, video_loop)
 
 def menu_quit():
     main_window.destroy()
     quit()
 
+canvas = tk.Canvas(main_window, width=canvas_width, height=canvas_height, bg=bg_color)
+canvas.pack()
 
-player_count_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 16, 'bold'), fg='black')
-player_count_label.place(relx=0.35, rely=0.25, anchor=tk.SW)
+title_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 20, 'bold'), fg='black', bg='black')
+title_label.place(relx=0.5, rely=0.2, anchor=tk.CENTER)
 
 play_button = tk.Button(main_window, text="Play", font=('Arial', 16, 'bold'), bg='goldenrod', command=start_game)
-play_button.place(relx=0.45, rely=0.5, anchor=tk.SE)
+play_button.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
 quit_button = tk.Button(main_window, text="Quit", font=('Arial', 16, 'bold'), bg='mediumseagreen', command=menu_quit)
-quit_button.place(relx=0.7, rely=0.5, anchor=tk.SE)
-
+quit_button.place(relx=0.5, rely=0.6, anchor=tk.CENTER)
 
 main_window.mainloop()
-
