@@ -2,13 +2,19 @@ import tkinter as tk
 import random
 from pygame import mixer
 from tkVideoPlayer import TkinterVideo
-
+from PIL import Image, ImageDraw, ImageFilter
 
 
 def click_sound():
     mixer.init()
-    sound = mixer.Sound("Click sound.mp3")
-    sound.play()
+    click_sound = mixer.Sound("Click sound.mp3")
+    click_sound.play()
+
+
+mixer.init()
+background_music = mixer.Sound("Background Music.mp3")
+background_music.play(loops=-1)
+
 
 def menu_close():
     main_window.withdraw()
@@ -34,7 +40,7 @@ def start_game():
     player_first = True
     win_condition = 10
 
-    result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='#18191A')
+    result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='#18191A', fg='white')
     result_label.place(relx=0.5, rely=0.08, anchor=tk.CENTER)
 
     player_count_label = tk.Label(game_window, text="Player's count: 0", font=('Arial', 16, 'bold'), bg='#18191A', fg='#FF1199')
@@ -249,13 +255,13 @@ def menu_quit():
     quit()
 
 
-title_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 20, 'bold'), fg='purple', bg='black')
-title_label.place(relx=0.5, rely=0.2, anchor=tk.CENTER)
+title_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 20, 'bold'), fg='purple', bg='white')
+title_label.place(relx=0.5, rely=0.35, anchor=tk.CENTER)
 
-play_button = tk.Button(main_window, text="Play", font=('Arial', 16, 'bold'), bg='goldenrod', command=start_game)
-play_button.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+play_button = tk.Button(main_window, text="Play", font=('Arial', 16, 'bold'), bg='white', command=start_game)
+play_button.place(relx=0.42, rely=0.5, anchor=tk.CENTER)
 
-quit_button = tk.Button(main_window, text="Quit", font=('Arial', 16, 'bold'), bg='mediumseagreen', command=menu_quit)
-quit_button.place(relx=0.5, rely=0.6, anchor=tk.CENTER)
+quit_button = tk.Button(main_window, text="Quit", font=('Arial', 16, 'bold'), bg='white', command=menu_quit)
+quit_button.place(relx=0.58, rely=0.5, anchor=tk.CENTER)
 
 main_window.mainloop()
