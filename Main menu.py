@@ -98,8 +98,6 @@ def start_game():
             else:
                 return
 
-        
-
 
     def computer_turn():
         global game_over
