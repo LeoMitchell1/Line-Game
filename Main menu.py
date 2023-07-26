@@ -38,7 +38,7 @@ def start_game():
     line_thickness = 12
 
     player_first = True
-    win_condition = 10
+    win_condition = 16
 
     result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='#18191A', fg='white')
     result_label.place(relx=0.5, rely=0.08, anchor=tk.CENTER)
@@ -52,19 +52,24 @@ def start_game():
     start_x = (canvas_width - (4 * dot_spacing + 4 * dot_size)) // 2
     start_y = (canvas_height - (4 * dot_spacing + 4 * dot_size)) // 2
 
+    computer_lines = []
+    player_lines = []
+
     def player_wins():
         global game_over
         print('Player wins!')
         game_over = True
-        result_label.config(text='Game Over! Player Wins.')
+        result_label.config(text='Congratulations! Player Wins.')
 
     def computer_wins():
         global game_over
         print('Game Over. You lose.')
         game_over = True
+        result_label.config(text='Game Over! Computer Wins.')
 
     def player_turn(event):
         global game_over
+
         if game_over:
             return
         line_id = event.widget.find_closest(event.x, event.y)[0]
@@ -76,23 +81,29 @@ def start_game():
         if color == '#18191A':
             c.itemconfig(line_id, fill='#FF1199')
             click_sound()
+            player_lines.append(line_id)
             update_player_count()
             computer_turn()
 
-        longest_line_length = count_longest_line()
+        longest_player_length = count_longest_line(player_lines)
+        longest_computer_length = count_longest_line(computer_lines)
 
+        check_red_win_condition(longest_player_length)
+        check_blue_win_condition(longest_computer_length)
+        
         if all_colored():
-            result_label.config(text='Game Over! There are no more moves.')
+            if game_over == False:
+                result_label.config(text='Game Over! There are no more moves.')
+                game_over = True
+            else:
+                return
 
-        if not check_win_condition(longest_line_length):
-            return
+        
 
-        # Update the player count starting from the clicked line
-        player_count = count_longest_line(start_line=line_id)
-        player_count_label.config(text="Player's count: " + str(player_count))
 
     def computer_turn():
         global game_over
+
         if game_over:
             return
 
@@ -100,58 +111,43 @@ def start_game():
         if white_lines:
             line_id = random.choice(white_lines)
             c.itemconfig(line_id, fill='#11FFEE')
+            computer_lines.append(line_id)
+            update_computer_count()
         else:
             return
 
-    def count_longest_line(start_line=None):
-        longest_line_length = 0
+    def count_longest_line(lines):
+        longest_length = 0
         visited = set()
-
+        if lines == player_lines:
+            color1 = '#FF1199'
+        elif lines == computer_lines:
+            color1 = '#11FFEE'
         for line_id in lines:
-            if c.itemcget(line_id, 'fill') == '#FF1199' and line_id not in visited:
-                if start_line and line_id != start_line:
-                    continue
-
+            if line_id not in visited:
                 touching_line_length = 0
-                stack = [(line_id, line_id)]  # Tuple: (current_line, prev_line)
+                stack = [(line_id, line_id)]
                 while stack:
                     current_line, prev_line = stack.pop()
                     if current_line not in visited:
                         visited.add(current_line)
                         touching_line_length += 1
-                        touching_lines = get_touching_red_lines(current_line)
+                        touching_lines = get_touching_lines(current_line, color1)
                         valid_touching_lines = [line for line in touching_lines if line != prev_line]
                         stack.extend([(line, current_line) for line in valid_touching_lines])
 
-                longest_line_length = max(longest_line_length, touching_line_length)
+                longest_length = max(longest_length, touching_line_length)
 
-        return longest_line_length
+        return longest_length
 
-    def is_only_touching_one_side(line1, line2):
-        x1, y1, x2, y2 = c.coords(line1)
-        x3, y3, x4, y4 = c.coords(line2)
-
-        # Determine the orientation of the lines based on their coordinates
-        line1_horizontal = y1 == y2
-        line1_vertical = x1 == x2
-        line2_horizontal = y3 == y4
-        line2_vertical = x3 == x4
-
-        if line1_horizontal and line2_horizontal:
-            return (y1 == y3 or y1 == y4) and (y2 == y3 or y2 == y4)
-        elif line1_vertical and line2_vertical:
-            return (x1 == x3 or x1 == x4) and (x2 == x3 or x2 == x4)
-
-        return False
-
-    def get_touching_red_lines(line_id):
+    def get_touching_lines(line_id, color1):
         touching_lines = []
         x1, y1, x2, y2 = c.coords(line_id)
         nearby_lines = c.find_overlapping(x1 - 5, y1 - 5, x2 + 5, y2 + 5)
         for nearby_line in nearby_lines:
             if nearby_line != line_id:
                 color = c.itemcget(nearby_line, 'fill')
-                if color == '#FF1199':
+                if color == color1:
                     touching_lines.append(nearby_line)
         return touching_lines
 
@@ -162,21 +158,25 @@ def start_game():
                 return False
         return True
 
-    def check_win_condition(player_count):
+    def check_red_win_condition(player_count):
         if player_count >= win_condition:
             player_wins()
             return True
-
-        computer_count = count_longest_line()
+        return False
+    
+    def check_blue_win_condition(computer_count):
         if computer_count >= win_condition:
             computer_wins()
             return True
-
         return False
 
     def update_player_count():
-        player_count = count_longest_line()
+        player_count = count_longest_line(player_lines)
         player_count_label.config(text="Player's count: " + str(player_count))
+
+    def update_computer_count():
+        computer_count = count_longest_line(computer_lines)
+        computer_count_label.config(text="Computer's count: " + str(computer_count))
 
     def main_menu():
         game_window.destroy()
@@ -190,9 +190,12 @@ def start_game():
         game_over = False
         result_label.config(text='')
         player_count_label.config(text="Player's count: 0")
+        computer_count_label.config(text="Computer's count: 0")
         c.delete('all')
         lines.clear()
         dots.clear()
+        player_lines.clear()
+        computer_lines.clear()
 
         for row in range(5):
             for col in range(4):
