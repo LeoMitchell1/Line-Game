@@ -15,12 +15,13 @@ mixer.init()
 background_music = mixer.Sound("Background Music.mp3")
 background_music.play(loops=-1)
 
-
 def menu_close():
     main_window.withdraw()
 
 def start_game():
     menu_close()
+
+    global player1_turn_check
 
     game_window = tk.Tk()
     game_window.title("Line Game")
@@ -37,10 +38,10 @@ def start_game():
     dot_spacing = 100
     line_thickness = 12
 
-    player_vs_player = True
+    player_vs_player = False
+    player1_turn_check = True
     player_first = True
     win_condition = 16
-    player1_turn_check = True
 
     result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='#18191A', fg='white')
     result_label.place(relx=0.5, rely=0.08, anchor=tk.CENTER)
@@ -53,7 +54,8 @@ def start_game():
 
     if player_vs_player == True:
         player_count_label.config(text= "Player 1 count: 0")
-        computer_count_label.config(text= "Player 2 count: 0")  
+        computer_count_label.config(text= "Player 2 count: 0")
+        computer_count_label.place(relx=0.67, rely=0.18, anchor=tk.SW)
     
     start_x = (canvas_width - (4 * dot_spacing + 4 * dot_size)) // 2
     start_y = (canvas_height - (4 * dot_spacing + 4 * dot_size)) // 2
@@ -61,27 +63,24 @@ def start_game():
     computer_lines = []
     player_lines = []
 
+
     def player_wins():
         global game_over
-        print('Player wins!')
         game_over = True
         result_label.config(text='Congratulations! Player Wins.')
 
     def computer_wins():
         global game_over
-        print('Game Over. You lose.')
         game_over = True
         result_label.config(text='Game Over! Computer Wins.')
 
     def player1_wins():
         global game_over
-        print('Player 1 wins!')
         game_over = True
         result_label.config(text='Game Over! Player 1 Wins.')
     
     def player2_wins():
         global game_over
-        print('Player 2 wins!')
         game_over = True
         result_label.config(text='Game Over! Player 2 Wins.')
 
@@ -99,10 +98,9 @@ def start_game():
         if color == '#18191A':
             c.itemconfig(line_id, fill='#FF1199')
             click_sound()
-            print("player turn is running")
             player_lines.append(line_id)
             update_player_count()
-            computer_turn()
+            computer_turn(c, player_lines, computer_lines, update_computer_count)
 
         longest_player_length = count_longest_line(player_lines)
         longest_computer_length = count_longest_line(computer_lines)
@@ -117,12 +115,8 @@ def start_game():
             else:
                 return
             
-    def player1_turn(event):
-        global game_over
-        global player1_turn_check
-        global line
-        
-        print('is on player 1')
+    def player_vs_player_turn(event):
+        global game_over, player1_turn_check
 
         if game_over:
             return
@@ -131,53 +125,26 @@ def start_game():
 
         if color == '#FF1199' or color == '#11FFEE':
             return
-
-        if color == '#18191A':
-            c.itemconfig(line_id, fill='#FF1199')
-            
-            click_sound()
-            player_lines.append(line_id)
-            update_player1_count()
-            player1_turn_check = False
-            print("player1 turn is running")
-            new_turn()
-            player2_turn(event)
-        longest_player_length = count_longest_line(player_lines)
-
-        check_red_win_condition(longest_player_length)
         
-        if all_colored():
-            if game_over == False:
-                result_label.config(text='Game Over! There are no more moves.')
-                game_over = True
-            else:
-                return
-            
-    def player2_turn(event):
-        global game_over
-        global player1_turn_check
-        print("is on player 2")
-        if game_over:
-            return
-        line_id = event.widget.find_closest(event.x, event.y)[0]
-        color = c.itemcget(line_id, 'fill')
-
-        if color == '#FF1199' or color == '#11FFEE':
-            return
-
         if color == '#18191A':
-            c.itemconfig(line_id, fill='#11FFEE')
-            click_sound()
-            computer_lines.append(line_id)
-            update_player2_count()
-            player1_turn_check = True
-            new_turn()
-            player1_turn(event)
+            if player1_turn_check == True:
+                c.itemconfig(line_id, fill='#FF1199')
+                click_sound()
+                player_lines.append(line_id)
+                update_player1_count()
+                player1_turn_check = False
+                longest_player_length = count_longest_line(player_lines)
+                check_red_win_condition(longest_player_length)
 
-        longest_computer_length = count_longest_line(computer_lines)
+            elif player1_turn_check == False:
+                c.itemconfig(line_id, fill='#11FFEE')
+                click_sound()
+                computer_lines.append(line_id)
+                update_player2_count()
+                player1_turn_check = True
+                longest_computer_length = count_longest_line(computer_lines)
+                check_blue_win_condition(longest_computer_length)
 
-        check_blue_win_condition(longest_computer_length)
-        
         if all_colored():
             if game_over == False:
                 result_label.config(text='Game Over! There are no more moves.')
@@ -185,19 +152,42 @@ def start_game():
             else:
                 return
         
-    def computer_turn():
-        global game_over
+    def computer_turn(c, player_lines, computer_lines, update_computer_count):
         if game_over:
             return
 
         white_lines = [line for line in lines if c.itemcget(line, 'fill') == '#18191A']
-        if white_lines:
+
+        # Look for player's lines to block or computer's lines to extend
+        for line_id in white_lines:
+            # Check if it connects with player's lines
+            if connects_with_player(c, line_id, player_lines):
+                c.itemconfig(line_id, fill='#11FFEE')
+                computer_lines.append(line_id)
+                update_computer_count()
+                break
+            # Check if it connects with computer's lines
+            elif connects_with_computer(c, line_id, computer_lines):
+                c.itemconfig(line_id, fill='#11FFEE')
+                computer_lines.append(line_id)
+                update_computer_count()
+                break
+
+        # If no lines to block or extend, make a random move
+        if not computer_lines:
             line_id = random.choice(white_lines)
             c.itemconfig(line_id, fill='#11FFEE')
             computer_lines.append(line_id)
             update_computer_count()
-        else:
-            return
+
+        # Check for a win or draw
+        longest_computer_length = count_longest_line(c, computer_lines)
+        check_blue_win_condition(longest_computer_length)
+        if all_colored(c, lines):
+            if not game_over:
+                result_label.config(text='Game Over! There are no more moves.')
+                game_over = True
+
 
     def count_longest_line(lines):
         longest_length = 0
@@ -289,6 +279,9 @@ def start_game():
         if player_vs_player == False:
             player_count_label.config(text="Player count: 0")
             computer_count_label.config(text="Computer count: 0")
+        else:
+            player_count_label.config(text="Player 1 count: 0")
+            computer_count_label.config(text="Player 2 count: 0")
         
         c.delete('all')
         lines.clear()
@@ -302,16 +295,10 @@ def start_game():
                 y = start_y + row * (dot_size + dot_spacing) + dot_size // 2
                 line = c.create_line(x, y, x + dot_spacing + dot_size, y, fill="#18191A", width=line_thickness)
                 lines.append(line)
-                print(player1_turn_check)
                 if player_vs_player == False:
-                    print("player vs player is false and binded")
                     c.tag_bind(line, '<Button-1>', player_turn)
-                elif player1_turn_check == True:
-                    print("player1 turn check is true and binded")
-                    c.tag_bind(line, '<Button-1>', player1_turn)
                 else:
-                    print("player1 turn check is false and binded")
-                    c.tag_bind(line, '<Button-1>', player2_turn)
+                    c.tag_bind(line, '<Button-1>', player_vs_player_turn)
 
         for row in range(4):
             for col in range(5):
@@ -320,14 +307,9 @@ def start_game():
                 line = c.create_line(x, y, x, y + dot_spacing + dot_size, fill="#18191A", width=line_thickness)
                 lines.append(line)
                 if player_vs_player == False:
-                    print("player vs player is false and binded")
                     c.tag_bind(line, '<Button-1>', player_turn)
-                if player1_turn_check == True:
-                    print("player1 turn check is true and binded")
-                    c.tag_bind(line, '<Button-1>', player1_turn)
-                if player1_turn_check == False:
-                    print("player1 turn check is false and binded")
-                    c.tag_bind(line, '<Button-1>', player2_turn)
+                else:
+                    c.tag_bind(line, '<Button-1>', player_vs_player_turn)
 
         for row in range(5):
             for col in range(5):
@@ -335,25 +317,12 @@ def start_game():
                 y = start_y + row * (dot_size + dot_spacing)
                 c.create_oval(x, y, x + dot_size, y + dot_size, fill="black")
 
-        def new_turn():
-            if player_vs_player == False:
-                print("player vs player is false and binded")
-                c.tag_bind(line, '<Button-1>', player_turn)
-            if player1_turn_check == True:
-                print("player1 turn check is true and binded")
-                c.tag_bind(line, '<Button-1>', player1_turn)
-            if player1_turn_check == False:
-                print("player1 turn check is false and binded")
-                c.tag_bind(line, '<Button-1>', player2_turn)
-
         if not player_first:
             computer_turn()
 
     start_new_game()
 
     
-
-
 
     restart_button = tk.Button(game_window, text="Restart", font=('Arial', 16, 'bold'), bg='goldenrod', command=start_new_game)
     restart_button.place(relx=0.66, rely=0.95, anchor=tk.SE)
