@@ -217,8 +217,8 @@ def start_game():
             return True
         return False
     
-    def check_blue_win_condition(computer_count):
-        if computer_count >= win_condition:
+    def check_blue_win_condition(computer_count, player_count):
+        if computer_count >= win_condition and player_count <= win_condition:
             if player_vs_player == False:
                 computer_wins()
             else:
