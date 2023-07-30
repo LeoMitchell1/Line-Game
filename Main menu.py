@@ -18,7 +18,7 @@ background_music.play(loops=-1)
 def menu_close():
     main_window.withdraw()
 
-def start_game():
+def start_game(grid_size, player_vs_player, difficulty, win_condition):
     menu_close()
 
     global player1_turn_check
@@ -38,13 +38,16 @@ def start_game():
     dot_spacing = 100
     line_thickness = 12
 
-    player_vs_player = False
     player1_turn_check = True
     player_first = True
-    win_condition = 16
+    num_row = grid_size - 1
+    num_col = grid_size
 
     result_label = tk.Label(game_window, text='', font=('Arial', 20, 'bold'), bg='#18191A', fg='white')
-    result_label.place(relx=0.5, rely=0.08, anchor=tk.CENTER)
+    result_label.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
+
+    win_condition_label = tk.Label(game_window, text="Win Condition: " + str(win_condition), font=('Arial', 16, 'bold'), bg='#18191A', fg='white')
+    win_condition_label.place(relx=0.04, rely=0.06, anchor=tk.SW)
 
     player_count_label = tk.Label(game_window, text="Player count: 0", font=('Arial', 16, 'bold'), bg='#18191A', fg='#FF1199')
     player_count_label.place(relx=0.1, rely=0.18, anchor=tk.SW)
@@ -52,13 +55,18 @@ def start_game():
     computer_count_label = tk.Label(game_window, text="Computer count: 0", font=('Arial', 16, 'bold'), bg='#18191A', fg='#11FFEE')
     computer_count_label.place(relx=0.61, rely=0.18, anchor=tk.SW)
 
+
     if player_vs_player == True:
         player_count_label.config(text= "Player 1 count: 0")
         computer_count_label.config(text= "Player 2 count: 0")
         computer_count_label.place(relx=0.67, rely=0.18, anchor=tk.SW)
     
-    start_x = (canvas_width - (4 * dot_spacing + 4 * dot_size)) // 2
-    start_y = (canvas_height - (4 * dot_spacing + 4 * dot_size)) // 2
+    grid_width = num_col * (dot_size + dot_spacing) + dot_size
+    grid_height = num_row * (dot_size + dot_spacing) + dot_size
+
+    # Calculate the new starting coordinates (centered in the canvas)
+    start_x = (canvas_width - grid_width) // 1
+    start_y = (canvas_height - grid_height) // 2
 
     computer_lines = []
     player_lines = []
@@ -158,13 +166,33 @@ def start_game():
             return
 
         white_lines = [line for line in lines if c.itemcget(line, 'fill') == '#18191A']
+
         if white_lines:
-            line_id = random.choice(white_lines)
-            c.itemconfig(line_id, fill='#11FFEE')
-            computer_lines.append(line_id)
-            update_computer_count()
+            if difficulty == "Easy":
+                line_id = random.choice(white_lines)
+                c.itemconfig(line_id, fill='#11FFEE')
+                computer_lines.append(line_id)
+                update_computer_count()
+                return
+            elif difficulty == "Hard":
+                for player_line in player_lines:
+                    adjacent_white_lines = get_touching_white_lines(player_line)
+                    valid_white_lines = [line for line in adjacent_white_lines if line in white_lines]
+                    if valid_white_lines:
+                        line_id = random.choice(valid_white_lines)
+                        c.itemconfig(line_id, fill='#11FFEE')
+                        computer_lines.append(line_id)
+                        update_computer_count()
+                        break
+                else:
+                    # If there are no adjacent white lines, choose a random white line.
+                    line_id = random.choice(white_lines)
+                    c.itemconfig(line_id, fill='#11FFEE')
+                    computer_lines.append(line_id)
+                    update_computer_count()
         else:
             return
+
 
     def count_longest_line(lines):
         longest_length = 0
@@ -200,6 +228,12 @@ def start_game():
                 if color == color1:
                     touching_lines.append(nearby_line)
         return touching_lines
+    
+    def get_touching_white_lines(line_id):
+        x1, y1, x2, y2 = c.coords(line_id)
+        nearby_lines = c.find_overlapping(x1 - 5, y1 - 5, x2 + 5, y2 + 5)
+        white_touching_lines = [line for line in nearby_lines if c.itemcget(line, 'fill') == '#18191A']
+        return white_touching_lines
 
     def all_colored():
         for line in lines:
@@ -266,8 +300,8 @@ def start_game():
         player_lines.clear()
         computer_lines.clear()
         
-        for row in range(5):
-            for col in range(4):
+        for row in range(num_col):
+            for col in range(num_row):
                 x = start_x + col * (dot_size + dot_spacing) + dot_size // 2
                 y = start_y + row * (dot_size + dot_spacing) + dot_size // 2
                 line = c.create_line(x, y, x + dot_spacing + dot_size, y, fill="#18191A", width=line_thickness)
@@ -277,8 +311,8 @@ def start_game():
                 else:
                     c.tag_bind(line, '<Button-1>', player_vs_player_turn)
 
-        for row in range(4):
-            for col in range(5):
+        for row in range(num_row):
+            for col in range(num_col):
                 x = start_x + col * (dot_size + dot_spacing) + dot_size // 2
                 y = start_y + row * (dot_size + dot_spacing) + dot_size // 2
                 line = c.create_line(x, y, x, y + dot_spacing + dot_size, fill="#18191A", width=line_thickness)
@@ -288,8 +322,8 @@ def start_game():
                 else:
                     c.tag_bind(line, '<Button-1>', player_vs_player_turn)
 
-        for row in range(5):
-            for col in range(5):
+        for row in range(num_col):
+            for col in range(num_col):
                 x = start_x + col * (dot_size + dot_spacing)
                 y = start_y + row * (dot_size + dot_spacing)
                 c.create_oval(x, y, x + dot_size, y + dot_size, fill="black")
@@ -332,16 +366,68 @@ main_window.after(1, video_loop)
 
 def menu_quit():
     main_window.destroy()
+    background_music.stop()
     quit()
 
 
-title_label = tk.Label(main_window, text="Longest Line Game", font=('Arial', 20, 'bold'), fg='purple', bg='white')
+title_label = tk.Label(main_window, text="HyperLine Showdown", font=('Roboto', 35, 'bold'), fg='#11FFEE', bg='#18191A')
 title_label.place(relx=0.5, rely=0.35, anchor=tk.CENTER)
 
-play_button = tk.Button(main_window, text="Play", font=('Arial', 16, 'bold'), bg='white', command=start_game)
+
+def start_with_options():
+    grid_size = int(grid_size_var.get())
+    player_vs_player = player_vs_player_var.get()
+    difficulty = difficulty_var.get()
+    win_condition = int(win_condition_entry.get())  # Get the win condition from the entry widget
+    start_game(grid_size, player_vs_player, difficulty, win_condition)
+
+
+    # Create grid size selection
+grid_size_label = tk.Label(main_window, text="Grid Size:", font=('Arial', 16), bg='#18191A', fg='white')
+grid_size_label.place(relx=0.4, rely=0.6, anchor=tk.CENTER)
+
+grid_size_var = tk.StringVar(main_window)
+grid_size_var.set("5")  # Default value
+
+grid_size_options = ["3", "4", "5"]  # Customize available grid sizes if needed
+
+grid_size_menu = tk.OptionMenu(main_window, grid_size_var, *grid_size_options)
+grid_size_menu.config(font=('Arial', 14), bg='white', activebackground='white', fg='black', activeforeground='black', relief='flat')
+grid_size_menu.place(relx=0.6, rely=0.6, anchor=tk.CENTER)
+
+# Create player vs player checkbox
+player_vs_player_label = tk.Label(main_window, text="Player vs Player", font=('Arial', 16), bg='#18191A', fg='white')
+player_vs_player_label.place(relx=0.4, rely=0.7, anchor=tk.CENTER)
+
+player_vs_player_var = tk.BooleanVar(main_window)
+player_vs_player_check = tk.Checkbutton(main_window, variable=player_vs_player_var, bg='#18191A', activebackground='#18191A')
+player_vs_player_check.place(relx=0.6, rely=0.7, anchor=tk.CENTER)
+
+# Create difficulty selection
+difficulty_label = tk.Label(main_window, text="Difficulty:", font=('Arial', 16), bg='#18191A', fg='white')
+difficulty_label.place(relx=0.35, rely=0.8, anchor=tk.CENTER)
+
+difficulty_var = tk.StringVar(main_window)
+difficulty_var.set("Easy")  # Default value
+
+difficulty_options = ["Easy", "Hard"]  # Customize available difficulty levels if needed
+
+difficulty_menu = tk.OptionMenu(main_window, difficulty_var, *difficulty_options)
+difficulty_menu.config(font=('Arial', 14), bg='white', activebackground='white', fg='black', activeforeground='black', relief='flat')
+difficulty_menu.place(relx=0.6, rely=0.8, anchor=tk.CENTER)
+
+win_condition_label = tk.Label(main_window, text="Win Condition:", font=('Arial', 16), bg='#18191A', fg='white')
+win_condition_label.place(relx=0.4, rely=0.9, anchor=tk.CENTER)
+
+win_condition_entry = tk.Entry(main_window, font=('Arial', 14), width=5)
+win_condition_entry.place(relx=0.6, rely=0.9, anchor=tk.CENTER)
+
+# Create play button
+play_button = tk.Button(main_window, text="Play", font=('Arial', 20), bg='white', command=start_with_options)
 play_button.place(relx=0.42, rely=0.5, anchor=tk.CENTER)
 
-quit_button = tk.Button(main_window, text="Quit", font=('Arial', 16, 'bold'), bg='white', command=menu_quit)
+quit_button = tk.Button(main_window, text="Quit", font=('Arial', 20), bg='white', command=menu_quit)
 quit_button.place(relx=0.58, rely=0.5, anchor=tk.CENTER)
+
 
 main_window.mainloop()

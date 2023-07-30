@@ -100,7 +100,7 @@ def start_game():
             click_sound()
             player_lines.append(line_id)
             update_player_count()
-            computer_turn(c, player_lines, computer_lines, update_computer_count)
+            computer_turn()
 
         longest_player_length = count_longest_line(player_lines)
         longest_computer_length = count_longest_line(computer_lines)
@@ -152,42 +152,19 @@ def start_game():
             else:
                 return
         
-    def computer_turn(c, player_lines, computer_lines, update_computer_count):
+    def computer_turn():
+        global game_over, player1_turn_check
         if game_over:
             return
 
         white_lines = [line for line in lines if c.itemcget(line, 'fill') == '#18191A']
-
-        # Look for player's lines to block or computer's lines to extend
-        for line_id in white_lines:
-            # Check if it connects with player's lines
-            if connects_with_player(c, line_id, player_lines):
-                c.itemconfig(line_id, fill='#11FFEE')
-                computer_lines.append(line_id)
-                update_computer_count()
-                break
-            # Check if it connects with computer's lines
-            elif connects_with_computer(c, line_id, computer_lines):
-                c.itemconfig(line_id, fill='#11FFEE')
-                computer_lines.append(line_id)
-                update_computer_count()
-                break
-
-        # If no lines to block or extend, make a random move
-        if not computer_lines:
+        if white_lines:
             line_id = random.choice(white_lines)
             c.itemconfig(line_id, fill='#11FFEE')
             computer_lines.append(line_id)
             update_computer_count()
-
-        # Check for a win or draw
-        longest_computer_length = count_longest_line(c, computer_lines)
-        check_blue_win_condition(longest_computer_length)
-        if all_colored(c, lines):
-            if not game_over:
-                result_label.config(text='Game Over! There are no more moves.')
-                game_over = True
-
+        else:
+            return
 
     def count_longest_line(lines):
         longest_length = 0
@@ -240,8 +217,8 @@ def start_game():
             return True
         return False
     
-    def check_blue_win_condition(computer_count):
-        if computer_count >= win_condition:
+    def check_blue_win_condition(computer_count, player_count):
+        if computer_count >= win_condition and player_count <= win_condition:
             if player_vs_player == False:
                 computer_wins()
             else:
