@@ -50,8 +50,17 @@ def computer_turn(board):
 
 def main():
     board = [[" " for _ in range(5)] for _ in range(5)]
-    player_vs_player = True  # Set this to True for player vs. player mode
-
+    while True:
+        try:
+            game_mode = int(input("Press 1 for Single-Player. Press 2 for Player vs Player: "))
+            if game_mode in (1, 2):
+                player_vs_player = game_mode == 2
+                break
+            else:
+                print("Invalid input. Please enter 1 or 2.")
+        except ValueError:
+            print("Invalid input. Please enter 1 or 2.")
+            
     print("Welcome to the Longest Line Game!")
     print("Player 1: X")
     if player_vs_player:
