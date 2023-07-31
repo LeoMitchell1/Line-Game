@@ -53,26 +53,15 @@ def get_play_again_input():
             print("Invalid input. Please enter 'yes' or 'no'.")
 
 def main():
-    while True:
-        board = [[" " for _ in range(5)] for _ in range(5)]
-        while True:
-            try:
-                print("Welcome to the HyperLink Showdown!")
-                print("First to five touching lines wins!")
-                game_mode = int(input("Press 1 for Single-Player. Press 2 for Player vs Player: "))
-                if game_mode in (1, 2):
-                    player_vs_player = game_mode == 2
-                    break
-                else:
-                    print("Invalid input. Please enter 1 or 2.")
-            except ValueError:
-                print("Invalid input. Please enter 1 or 2.")
+    board = [[" " for _ in range(5)] for _ in range(5)]
+    player_vs_player = True  # Set this to True for player vs. player mode
 
-        print("Player 1: X")
-        if player_vs_player:
-            print("Player 2: O")
-        else:
-            print("Computer: O")
+    print("Welcome to the Longest Line Game!")
+    print("Player 1: X")
+    if player_vs_player:
+        print("Player 2: O")
+    else:
+        print("Computer: O")
 
         current_player = "X"
         while True:
